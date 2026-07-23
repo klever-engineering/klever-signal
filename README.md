@@ -47,6 +47,6 @@ The first release deliberately separates deterministic collection from interpret
 ## Release checklist
 
 1. Run the test command and a real audit against a disposable fixture home.
-2. Add a changelog and version tag.
-3. Create the public GitHub repository under `klever-engineering`.
-4. Add CI and publish to PyPI only after package metadata and licensing are reviewed.
+2. Review `CHANGELOG.md`, package metadata, and the MIT license.
+3. Create the public GitHub repository under `klever-engineering` and push `main`.
+4. Enable the included CI workflow and publish to PyPI only after package metadata is reviewed.
