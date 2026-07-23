@@ -111,27 +111,94 @@ def audit_home(codex_home: Path) -> dict[str, Any]:
     home = codex_home.expanduser().resolve()
     audits = [audit_session(path, home) for path in session_files(home)]
     fingerprint_counts = Counter(audit.prompt_fingerprint for audit in audits if audit.prompt_fingerprint)
+    sessions = [audit.as_dict() for audit in audits]
+    totals = {
+        "turns": sum(audit.turns for audit in audits),
+        "compactions": sum(audit.compactions for audit in audits),
+        "tool_calls": sum(audit.tool_calls for audit in audits),
+        "input_tokens": sum(audit.total_input_tokens for audit in audits),
+        "cached_input_tokens": sum(audit.cached_input_tokens for audit in audits),
+        "output_tokens": sum(audit.output_tokens for audit in audits),
+    }
+    repeated_prompt_groups = [
+        {"fingerprint": fingerprint, "session_count": count}
+        for fingerprint, count in fingerprint_counts.most_common()
+        if count > 1
+    ]
     return {
         "schema_version": 1,
         "codex_home": str(home),
         "session_count": len(audits),
-        "totals": {
-            "turns": sum(audit.turns for audit in audits),
-            "compactions": sum(audit.compactions for audit in audits),
-            "tool_calls": sum(audit.tool_calls for audit in audits),
-            "input_tokens": sum(audit.total_input_tokens for audit in audits),
-            "cached_input_tokens": sum(audit.cached_input_tokens for audit in audits),
-            "output_tokens": sum(audit.output_tokens for audit in audits),
-        },
-        "repeated_prompt_groups": [
-            {"fingerprint": fingerprint, "session_count": count}
-            for fingerprint, count in fingerprint_counts.most_common()
-            if count > 1
-        ],
-        "sessions": [audit.as_dict() for audit in audits],
+        "totals": totals,
+        "repeated_prompt_groups": repeated_prompt_groups,
+        "sessions": sessions,
+        "analysis": build_analysis(totals, sessions, repeated_prompt_groups),
         "privacy": {
             "raw_prompt_text_stored": False,
             "raw_transcripts_copied": False,
             "prompt_fingerprints": "sha256 prefix of first actionable user prompt",
+        },
+    }
+
+
+def build_analysis(
+    totals: dict[str, int],
+    sessions: list[dict[str, Any]],
+    repeated_prompt_groups: list[dict[str, Any]],
+) -> dict[str, Any]:
+    """Return transparent, deterministic optimization signals, not causal claims."""
+    findings: list[dict[str, str]] = []
+    cache_rate = totals["cached_input_tokens"] / totals["input_tokens"] if totals["input_tokens"] else 0
+    if repeated_prompt_groups:
+        repeated_sessions = sum(group["session_count"] for group in repeated_prompt_groups)
+        findings.append({
+            "priority": "high",
+            "title": "Add retry admission gates for repeated prompts",
+            "evidence": f"{repeated_sessions} sessions belong to {len(repeated_prompt_groups)} repeated actionable-prompt groups.",
+            "recommendation": "Before retrying a goal, require a changed failure signature, a workspace change, or explicit approval."
+        })
+    long_sessions = [session for session in sessions if session["turns"] >= 15]
+    if long_sessions:
+        findings.append({
+            "priority": "high",
+            "title": "Split long control sessions at phase boundaries",
+            "evidence": f"{len(long_sessions)} sessions reached 15 or more turns.",
+            "recommendation": "After a goal-family or work-mode change, start a new session with a short handoff: outcome, non-goals, evidence, and next stop condition."
+        })
+    compaction_heavy = [session for session in sessions if session["compactions"] >= 2 or (session["turns"] and session["compactions"] / session["turns"] >= 0.15)]
+    if compaction_heavy:
+        findings.append({
+            "priority": "medium",
+            "title": "Review compaction-trigger policy and handoff quality",
+            "evidence": f"{len(compaction_heavy)} sessions have multiple or dense compactions.",
+            "recommendation": "Keep compaction summaries structured around active outcome, decisions, non-goals, verification state, and blockers; do not treat compaction count alone as a failure."
+        })
+    if totals["input_tokens"] and cache_rate < 0.30:
+        findings.append({
+            "priority": "medium",
+            "title": "Stabilize repeated prompt prefixes for caching",
+            "evidence": f"Cached input is only {cache_rate:.1%} of reported input tokens.",
+            "recommendation": "Keep durable instructions and tool contracts in a stable prefix; inject goal-specific details after it."
+        })
+    if not findings:
+        findings.append({
+            "priority": "low",
+            "title": "No threshold-based optimization signal detected",
+            "evidence": "The deterministic rules did not flag retries, long sessions, dense compaction, or low cache reuse.",
+            "recommendation": "Review the highest-cost sessions qualitatively before changing prompt or runtime policy."
+        })
+
+    def review_score(session: dict[str, Any]) -> int:
+        return session["turns"] * 3 + session["compactions"] * 25 + session["tool_calls"] // 4 + session["uncached_input_tokens"] // 10_000
+
+    review_candidates = sorted(sessions, key=review_score, reverse=True)[:10]
+    return {
+        "cache_rate": cache_rate,
+        "findings": findings,
+        "review_candidates": review_candidates,
+        "thresholds": {
+            "long_session_turns": 15,
+            "compaction_density": 0.15,
+            "low_cache_rate": 0.30,
         },
     }

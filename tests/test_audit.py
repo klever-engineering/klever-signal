@@ -3,6 +3,7 @@ from pathlib import Path
 import unittest
 
 from codex_session_audit.audit import audit_home
+from codex_session_audit.cli import _html, _markdown
 
 
 def write_records(path: Path, records: list[dict]) -> None:
@@ -32,3 +33,5 @@ class AuditTests(unittest.TestCase):
             self.assertTrue(report["sessions"][0]["prompt_fingerprint"])
             self.assertNotIn("Implement FCP-030 only.", json.dumps(report))
             self.assertFalse(report["privacy"]["raw_transcripts_copied"])
+            self.assertIn("Optimization assessment", _markdown(report))
+            self.assertIn("Prioritized optimizations", _html(report))

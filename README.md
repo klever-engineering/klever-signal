@@ -23,8 +23,9 @@ python -m unittest discover -s tests
 ## Usage
 
 ```bash
-codex-session-audit --codex-home ./my-codex-home
+codex-session-audit --codex-home ./my-codex-home  # rich Markdown report (default)
 codex-session-audit --codex-home ./my-codex-home --format markdown
+codex-session-audit --codex-home ./my-codex-home --format html --output report.html
 codex-session-audit --codex-home ./my-codex-home --output report.json
 ```
 
@@ -34,6 +35,8 @@ codex-session-audit --codex-home ./my-codex-home --output report.json
 - final reported token totals and cache ratio inputs;
 - repeated actionable-prompt fingerprints across sessions;
 - source-relative session locations for review.
+
+Markdown and HTML reports add prioritized optimization findings, evidence, recommended actions, and a ranked review queue. They flag patterns such as retry-prone repeated prompts, oversized control sessions, dense compaction, and weak cache reuse. Thresholds are prompts for review, never claims of causality.
 
 The first release deliberately separates deterministic collection from interpretation. It does not claim that a compaction or a long session was harmful without reviewing the relevant evidence.
 
