@@ -1,6 +1,6 @@
 [build-system]
-requires = ["hatchling>=1.27"]
-build-backend = "hatchling.build"
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
 
 [project]
 name = "codex-session-audit"
@@ -21,8 +21,8 @@ classifiers = [
 [project.scripts]
 codex-session-audit = "codex_session_audit.cli:main"
 
-[tool.hatch.build.targets.wheel]
-packages = ["src/codex_session_audit"]
+[tool.setuptools.packages.find]
+where = ["src"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
