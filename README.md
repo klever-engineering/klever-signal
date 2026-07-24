@@ -35,7 +35,7 @@ npx @klever-engineering/klever-signal --codex-home ./my-codex-home --format json
 - repeated actionable-prompt fingerprints across sessions;
 - source-relative session locations for review.
 
-Markdown and HTML reports add a prioritized, implementable improvement backlog. Each deterministic signal includes evidence, an interpretation boundary, and one or more concrete interventions that can become a skill, technique, or harness feature. Every intervention states what to build, how to verify it, and the metric that should move. They flag patterns such as retry-prone repeated prompts, oversized control sessions, dense compaction, and weak cache reuse. Thresholds are prompts for review, never claims of causality.
+Markdown and HTML reports use stable, Sonar-style rules (`KS001`, `KS002`, and so on) rather than anonymous threshold warnings. Each rule has a category, priority, detection evidence, why it matters, a remediation backlog, a verification procedure, and an outcome metric. The HTML report also visualizes session-turn and compaction distributions plus the path from signal to measurable improvement. Rules flag patterns such as retry-prone repeated prompts, oversized control sessions, dense compaction, weak cache reuse, and tool-loop hotspots. Thresholds are prompts for review, never claims of causality.
 
 The first release deliberately separates deterministic collection from interpretation. It does not claim that a compaction or a long session was harmful without reviewing the relevant evidence. Claude and other coding-agent adapters are future capabilities, not current claims.
 

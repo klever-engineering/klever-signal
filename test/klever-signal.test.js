@@ -23,8 +23,13 @@ test("audits a Codex home without emitting raw prompt text", () => {
   assert.equal(JSON.stringify(report).includes("Implement a private feature."), false);
   assert.ok(report.analysis.findings[0].interventions.length > 0);
   assert.ok(report.analysis.findings[0].interventions[0].verification);
+  assert.equal(report.analysis.findings[0].ruleId, "KS003");
+  assert.equal(report.analysis.findings[0].category, "Context management");
+  assert.equal(report.analysis.visuals.turnBands.reduce((sum, band) => sum + band.count, 0), 1);
   assert.match(markdownReport(report), /Optimization assessment/);
   assert.match(markdownReport(report), /Implementation backlog/);
+  assert.match(markdownReport(report), /Rule inventory/);
   assert.match(htmlReport(report), /Prioritized optimizations/);
   assert.match(htmlReport(report), /Implementation backlog/);
+  assert.match(htmlReport(report), /Distribution snapshots/);
 });
