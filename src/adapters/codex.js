@@ -114,6 +114,40 @@ function buildAnalysis(totals, sessions, repeatedPromptGroups) {
   ], toolHotspots.length));
   if (!findings.length) findings.push(rule("KS000", "Qualitative review", "low", "No threshold-based optimization signal detected", "This informational rule means the current deterministic checks did not identify a common session smell; it does not certify that the operating model is optimal.", "The deterministic rules did not flag retries, long sessions, dense compaction, low cache reuse, or tool-loop hotspots.", "Absence of a threshold signal is not evidence of an optimal operating model.", "Review the highest-cost sessions qualitatively before changing prompt or runtime policy.", [intervention("qualitative-review", "technique", "session-review rubric", ["Sample the highest-cost sessions.", "Classify friction as missing context, unclear completion criteria, tool failure, or coordination overhead."], "Two reviewers should agree on the friction category for a small calibration sample.", "Reviewed high-cost sessions")], 0));
   const score = (session) => session.turns * 3 + session.compactions * 25 + Math.floor(session.toolCalls / 4) + Math.floor(session.uncachedInputTokens / 10000);
+  const representative = (candidates, reason) => {
+    const session = [...candidates].sort((a, b) => score(b) - score(a))[0];
+    return session ? { source: session.source, turns: session.turns, compactions: session.compactions, toolCalls: session.toolCalls, uncachedInputTokens: session.uncachedInputTokens, reason } : null;
+  };
+  const repeatedFingerprints = new Set(repeatedPromptGroups.map((group) => group.fingerprint));
+  const examples = {
+    KS001: representative(sessions.filter((session) => repeatedFingerprints.has(session.promptFingerprint)), "It belongs to a repeated actionable-prompt group and has the highest review score within that group."),
+    KS002: representative(longSessions, "It exceeds the long-session threshold and has the highest combined turn, compaction, tool, and uncached-input review score."),
+    KS003: representative(compactionHeavy, "It triggered the compaction rule and has the highest combined review score among those sessions."),
+    KS004: representative(sessions.filter((session) => session.totalInputTokens > 0), "It has the highest combined review score among sessions with reported input-token usage."),
+    KS005: representative(toolHotspots, "It exceeds the tool-call hotspot threshold and has the highest combined review score among those sessions."),
+  };
+  for (const finding of findings) {
+    finding.example = examples[finding.ruleId] ?? representative(sessions, "It has the highest combined review score in this audit.");
+    finding.remediationPrompt = [
+      `You are implementing the remediation for Klever Signal rule ${finding.ruleId}: ${finding.title}.`,
+      "",
+      `Rule definition: ${finding.description}`,
+      `Observed signal: ${finding.evidence}`,
+      `Goal: ${finding.recommendation}`,
+      "",
+      "Implement the following interventions:",
+      ...finding.interventions.flatMap((item, index) => [`${index + 1}. ${item.layer}: ${item.artifact}`, ...item.implementation.map((step) => `   - ${step}`)]),
+      "",
+      "Requirements:",
+      "- Keep the implementation scoped and reusable; make a skill, harness feature, or documented technique according to the intervention layer.",
+      "- Add an automated or repeatable verification that proves the stated behavior.",
+      "- Record the named metric before and after adoption; do not claim improvement without that comparison.",
+      "- Preserve privacy: do not copy raw session transcripts or prompts into the implementation or its logs.",
+      "",
+      "Completion criteria:",
+      ...finding.interventions.map((item) => `- ${item.artifact}: ${item.verification}`),
+    ].join("\n");
+  }
   return { cacheRate, findings, reviewCandidates: [...sessions].sort((a, b) => score(b) - score(a)).slice(0, 10), visuals: { turnBands, compactionBands }, thresholds: { longSessionTurns: 15, compactionDensity: 0.15, lowCacheRate: 0.30, toolCallHotspot: toolCallThreshold } };
 }
 

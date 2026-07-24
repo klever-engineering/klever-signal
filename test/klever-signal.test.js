@@ -3,7 +3,7 @@ import { mkdtempSync, mkdirSync, writeFileSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import test from "node:test";
-import { auditCodexHome, htmlReport, markdownReport } from "../src/index.js";
+import { auditCodexHome, htmlReport, markdownReport, resumeReport } from "../src/index.js";
 
 test("audits a Codex home without emitting raw prompt text", () => {
   const home = mkdtempSync(path.join(os.tmpdir(), "klever-signal-"));
@@ -35,4 +35,8 @@ test("audits a Codex home without emitting raw prompt text", () => {
   assert.match(htmlReport(report), /Implementation backlog/);
   assert.match(htmlReport(report), /Distribution snapshots/);
   assert.match(htmlReport(report), /What it is/);
+  const resume = resumeReport(report, "KS003");
+  assert.match(resume, /Representative session/);
+  assert.match(resume, /Immediate remediation prompt/);
+  assert.equal(resume.includes("Implement a private feature."), false);
 });

@@ -26,6 +26,7 @@ npm test
 npx @klever-engineering/klever-signal --codex-home ./my-codex-home
 npx @klever-engineering/klever-signal --codex-home ./my-codex-home --format html --output report.html
 npx @klever-engineering/klever-signal --codex-home ./my-codex-home --format json --output report.json
+npx @klever-engineering/klever-signal resume --codex-home ./my-codex-home --rule KS001
 ```
 
 ## Initial Codex adapter
@@ -36,6 +37,8 @@ npx @klever-engineering/klever-signal --codex-home ./my-codex-home --format json
 - source-relative session locations for review.
 
 Markdown and HTML reports use stable, Sonar-style rules (`KS001`, `KS002`, and so on) rather than anonymous threshold warnings. Each rule has a category, priority, detection evidence, why it matters, a remediation backlog, a verification procedure, and an outcome metric. The HTML report also visualizes session-turn and compaction distributions plus the path from signal to measurable improvement. Rules flag patterns such as retry-prone repeated prompts, oversized control sessions, dense compaction, weak cache reuse, and tool-loop hotspots. Thresholds are prompts for review, never claims of causality.
+
+Every rule includes an immediate remediation prompt. It is an implementation-ready brief for creating the relevant skill, technique, or harness improvement, including verification and metric requirements. `resume` prints that prompt together with a representative source-relative session example and derived metrics. It deliberately does not print raw prompts or transcript content.
 
 The first release deliberately separates deterministic collection from interpretation. It does not claim that a compaction or a long session was harmful without reviewing the relevant evidence. Claude and other coding-agent adapters are future capabilities, not current claims.
 
