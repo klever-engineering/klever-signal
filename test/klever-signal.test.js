@@ -21,6 +21,10 @@ test("audits a Codex home without emitting raw prompt text", () => {
   assert.equal(report.totals.compactions, 1);
   assert.ok(report.sessions[0].promptFingerprint);
   assert.equal(JSON.stringify(report).includes("Implement a private feature."), false);
+  assert.ok(report.analysis.findings[0].interventions.length > 0);
+  assert.ok(report.analysis.findings[0].interventions[0].verification);
   assert.match(markdownReport(report), /Optimization assessment/);
+  assert.match(markdownReport(report), /Implementation backlog/);
   assert.match(htmlReport(report), /Prioritized optimizations/);
+  assert.match(htmlReport(report), /Implementation backlog/);
 });

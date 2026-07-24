@@ -72,16 +72,58 @@ function auditSession(file, home) {
 function buildAnalysis(totals, sessions, repeatedPromptGroups) {
   const findings = [];
   const cacheRate = totals.inputTokens ? totals.cachedInputTokens / totals.inputTokens : 0;
+  const percentage = (part, whole) => whole ? `${((part / whole) * 100).toFixed(1)}%` : "0.0%";
+  const intervention = (id, layer, artifact, implementation, verification, metric) => ({ id, layer, artifact, implementation, verification, metric });
   if (repeatedPromptGroups.length) {
     const repeatedSessions = repeatedPromptGroups.reduce((sum, group) => sum + group.sessionCount, 0);
-    findings.push({ priority: "high", title: "Add retry admission gates for repeated prompts", evidence: `${repeatedSessions} sessions belong to ${repeatedPromptGroups.length} repeated actionable-prompt groups.`, recommendation: "Before retrying a goal, require a changed failure signature, a workspace change, or explicit approval." });
+    findings.push({
+      priority: "high",
+      title: "Add retry admission gates for repeated prompts",
+      evidence: `${repeatedSessions} sessions (${percentage(repeatedSessions, sessions.length)}) belong to ${repeatedPromptGroups.length} repeated actionable-prompt groups.`,
+      insight: "Repeated requests are not automatically waste, but they are a strong signal that retries can proceed without new evidence or a changed execution path.",
+      recommendation: "Before retrying a goal, require a changed failure signature, a workspace change, or explicit approval.",
+      interventions: [
+        intervention("retry-admission", "skill", "retry-admission-gate", ["Define a retry card: prior attempt, observed blocker, what changed, and next verification command.", "Require the card before an agent resumes a materially identical goal."], "Run three known retry cases; the gate must reject an unchanged retry and allow a retry with recorded new evidence.", "Repeated-prompt session share"),
+        intervention("retry-admission", "harness", "retry-dedup hook", ["Fingerprint the normalized task request at session start.", "When the fingerprint recurs within a chosen window, surface the prior outcome and require a change reason."], "Track gate decisions and confirm that every admitted repeat has a recorded change reason.", "Admitted repeats without a change reason"),
+      ],
+    });
   }
   const longSessions = sessions.filter((session) => session.turns >= 15);
-  if (longSessions.length) findings.push({ priority: "high", title: "Split long control sessions at phase boundaries", evidence: `${longSessions.length} sessions reached 15 or more turns.`, recommendation: "After a goal-family or work-mode change, start a new session with a short handoff: outcome, non-goals, evidence, and next stop condition." });
+  if (longSessions.length) findings.push({
+    priority: "high",
+    title: "Split long control sessions at phase boundaries",
+    evidence: `${longSessions.length} sessions (${percentage(longSessions.length, sessions.length)}) reached 15 or more turns.`,
+    insight: "Long sessions can be productive; the practical risk is carrying obsolete assumptions and tool state after the work has changed phase.",
+    recommendation: "After a goal-family or work-mode change, start a new session with a short handoff: outcome, non-goals, evidence, and next stop condition.",
+    interventions: [
+      intervention("phase-handoff", "technique", "phase-boundary handoff", ["Use a five-field handoff: achieved outcome, active decision, non-goals, verification state, next stop condition.", "Start a fresh worker session whenever the goal, repository, or execution mode changes."], "Review ten handoffs: every field must be present and the next worker must be able to run the named verification without reading the previous transcript.", "Turns after last phase change"),
+      intervention("phase-handoff", "harness", "turn-budget checkpoint", ["At a configurable turn threshold, ask whether the current goal and repository are unchanged.", "If not, emit the handoff template and end the worker session."], "Simulate a repository change and confirm the checkpoint creates a handoff instead of extending the old context.", "Sessions exceeding turn budget without a handoff"),
+    ],
+  });
   const compactionHeavy = sessions.filter((session) => session.compactions >= 2 || (session.turns && session.compactions / session.turns >= 0.15));
-  if (compactionHeavy.length) findings.push({ priority: "medium", title: "Review compaction-trigger policy and handoff quality", evidence: `${compactionHeavy.length} sessions have multiple or dense compactions.`, recommendation: "Keep summaries structured around active outcome, decisions, non-goals, verification state, and blockers; do not treat compaction count alone as a failure." });
-  if (totals.inputTokens && cacheRate < 0.30) findings.push({ priority: "medium", title: "Stabilize repeated prompt prefixes for caching", evidence: `Cached input is only ${(cacheRate * 100).toFixed(1)}% of reported input tokens.`, recommendation: "Keep durable instructions and tool contracts in a stable prefix; inject goal-specific details after it." });
-  if (!findings.length) findings.push({ priority: "low", title: "No threshold-based optimization signal detected", evidence: "The deterministic rules did not flag retries, long sessions, dense compaction, or low cache reuse.", recommendation: "Review the highest-cost sessions qualitatively before changing prompt or runtime policy." });
+  if (compactionHeavy.length) findings.push({
+    priority: "medium",
+    title: "Review compaction-trigger policy and handoff quality",
+    evidence: `${compactionHeavy.length} sessions (${percentage(compactionHeavy.length, sessions.length)}) have multiple or dense compactions.`,
+    insight: "Compaction is a normal context-management mechanism. The improvement opportunity is preserving decision-critical state so the resumed agent does not rediscover it.",
+    recommendation: "Keep summaries structured around active outcome, decisions, non-goals, verification state, and blockers; do not treat compaction count alone as a failure.",
+    interventions: [
+      intervention("compaction-contract", "skill", "context-resume-contract", ["Add a compact-before-resume template with the five decision-critical fields.", "Require a named source of truth for any unresolved decision or verification claim."], "Give a fresh agent only the compacted handoff and confirm it can identify the next action, constraint, and verification command.", "Post-compaction rediscovery turns"),
+      intervention("compaction-contract", "harness", "compaction quality check", ["Detect compaction events and attach a structured checklist to the next turn.", "Flag missing outcome, blocker, or verification state for human review."], "Sample compacted sessions and score the checklist completion rate.", "Complete compaction handoffs"),
+    ],
+  });
+  if (totals.inputTokens && cacheRate < 0.30) findings.push({
+    priority: "medium",
+    title: "Stabilize repeated prompt prefixes for caching",
+    evidence: `Cached input is only ${(cacheRate * 100).toFixed(1)}% of reported input tokens.`,
+    insight: "Low reuse suggests that durable instructions or tool contracts may be changing position or wording between requests, increasing uncached context without necessarily improving quality.",
+    recommendation: "Keep durable instructions and tool contracts in a stable prefix; inject goal-specific details after it.",
+    interventions: [
+      intervention("stable-prefix", "harness", "context assembler", ["Assemble policy, tool contract, and output contract in a deterministic order.", "Append task-specific evidence after the stable block; version the stable block deliberately."], "Compare cache rate for a controlled set of equivalent tasks before and after the assembly change.", "Cache rate and uncached input per completed task"),
+      intervention("stable-prefix", "technique", "prompt contract split", ["Move durable rules into a concise invariant section.", "Keep volatile task data, logs, and artifacts in a separately labeled evidence section."], "Review five prompts and verify that only the evidence section changes between equivalent runs.", "Stable-prefix change rate"),
+    ],
+  });
+  if (!findings.length) findings.push({ priority: "low", title: "No threshold-based optimization signal detected", evidence: "The deterministic rules did not flag retries, long sessions, dense compaction, or low cache reuse.", insight: "Absence of a threshold signal is not evidence of an optimal operating model.", recommendation: "Review the highest-cost sessions qualitatively before changing prompt or runtime policy.", interventions: [intervention("qualitative-review", "technique", "session-review rubric", ["Sample the highest-cost sessions.", "Classify friction as missing context, unclear completion criteria, tool failure, or coordination overhead."], "Two reviewers should agree on the friction category for a small calibration sample.", "Reviewed high-cost sessions")] });
   const score = (session) => session.turns * 3 + session.compactions * 25 + Math.floor(session.toolCalls / 4) + Math.floor(session.uncachedInputTokens / 10000);
   return { cacheRate, findings, reviewCandidates: [...sessions].sort((a, b) => score(b) - score(a)).slice(0, 10), thresholds: { longSessionTurns: 15, compactionDensity: 0.15, lowCacheRate: 0.30 } };
 }
