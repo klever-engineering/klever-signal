@@ -1,0 +1,32 @@
+{
+  "name": "@klever-engineering/klever-signal",
+  "version": "0.1.0",
+  "description": "Privacy-preserving optimization signals for coding-agent sessions",
+  "license": "MIT",
+  "type": "module",
+  "bin": {
+    "klever-signal": "./bin/klever-signal.js"
+  },
+  "files": [
+    "bin",
+    "src",
+    "README.md",
+    "LICENSE",
+    "CHANGELOG.md"
+  ],
+  "exports": "./src/index.js",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "test": "node --test",
+    "smoke": "node ./bin/klever-signal.js --help"
+  },
+  "keywords": [
+    "coding-agents",
+    "codex",
+    "prompt-engineering",
+    "session-analytics"
+  ],
+  "author": "Klever Engineering"
+}

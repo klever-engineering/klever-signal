@@ -11,22 +11,21 @@ The durable product is a CLI: it can run in cron or CI and produce machine-reada
 ## Install
 
 ```bash
-pipx install .
+npx @klever-engineering/klever-signal --help
 ```
 
-For development, use the standard library only:
+For development, Node.js 20+ is the only requirement:
 
 ```bash
-python -m unittest discover -s tests
+npm test
 ```
 
 ## Usage
 
 ```bash
-klever-signal --codex-home ./my-codex-home  # rich Markdown report (default)
-klever-signal --codex-home ./my-codex-home --format markdown
-klever-signal --codex-home ./my-codex-home --format html --output report.html
-klever-signal --codex-home ./my-codex-home --format json --output report.json
+npx @klever-engineering/klever-signal --codex-home ./my-codex-home
+npx @klever-engineering/klever-signal --codex-home ./my-codex-home --format html --output report.html
+npx @klever-engineering/klever-signal --codex-home ./my-codex-home --format json --output report.json
 ```
 
 ## Initial Codex adapter
@@ -52,4 +51,4 @@ The first release deliberately separates deterministic collection from interpret
 1. Run the test command and a real audit against a disposable fixture home.
 2. Review `CHANGELOG.md`, package metadata, and the MIT license.
 3. Create the public GitHub repository under `klever-engineering` and push `main`.
-4. Enable the included CI workflow and publish to PyPI only after package metadata is reviewed.
+4. Enable the included CI workflow and publish to npm only after package metadata is reviewed.

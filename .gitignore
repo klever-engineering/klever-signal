@@ -1,6 +1,7 @@
-__pycache__/
-*.py[cod]
-.pytest_cache/
+node_modules/
 build/
 dist/
+coverage/
+reports/
+__pycache__/
 *.egg-info/

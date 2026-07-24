@@ -9,10 +9,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-node@v4
         with:
-          python-version: "3.11"
+          node-version: "20"
       - name: Run tests
-        run: PYTHONPATH=src python -m unittest discover -s tests -v
-      - name: Verify package imports
-        run: PYTHONPATH=src python -m codex_session_audit.cli --help
+        run: npm test
+      - name: Verify CLI
+        run: npm run smoke

@@ -5,4 +5,4 @@
 - Every session source must be supplied explicitly through its adapter parameter; the initial Codex adapter uses `--codex-home`.
 - Keep raw-session parsing deterministic and test it with synthetic JSONL fixtures.
 - Do not hardcode local paths in source code or documentation.
-- Before handoff run `python -m unittest discover -s tests` and a fixture smoke test.
+- Before handoff run `npm test` and `npm run smoke`.
