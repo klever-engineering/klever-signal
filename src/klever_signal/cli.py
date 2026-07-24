@@ -16,7 +16,7 @@ def _markdown(report: dict[str, Any]) -> str:
     input_tokens = totals["input_tokens"]
     cache_rate = analysis["cache_rate"] * 100
     lines = [
-        "# Codex Session Audit",
+        "# Klever Signal — Codex Session Analysis",
         "",
         f"- Sessions: {report['session_count']}",
         f"- Turns: {totals['turns']}",
@@ -68,9 +68,9 @@ def _html(report: dict[str, Any]) -> str:
     )
     return f"""<!doctype html>
 <html lang='en'><head><meta charset='utf-8'><meta name='viewport' content='width=device-width,initial-scale=1'>
-<title>Codex Session Audit</title><style>
+<title>Klever Signal — Codex Session Analysis</title><style>
 body{{font:16px/1.5 system-ui,sans-serif;max-width:1050px;margin:2rem auto;padding:0 1rem;color:#172033;background:#fbfcfe}} h1,h2{{color:#102a43}} .metrics{{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1rem}} .metric,article{{background:white;border:1px solid #d9e2ec;border-radius:10px;padding:1rem}} .metric b{{display:block;font-size:1.5rem}} article.high{{border-left:5px solid #d64545}} article.medium{{border-left:5px solid #d99a00}} article.low{{border-left:5px solid #2f855a}} table{{width:100%;border-collapse:collapse;background:white}} td,th{{padding:.6rem;border:1px solid #d9e2ec;text-align:left}} code{{font-size:.85em}} </style></head>
-<body><h1>Codex Session Audit</h1><p>Deterministic optimization signals. No raw prompts or transcript copies are included.</p>
+<body><h1>Klever Signal — Codex Session Analysis</h1><p>Deterministic optimization signals from the Codex adapter. No raw prompts or transcript copies are included.</p>
 <section class='metrics'><div class='metric'><span>Sessions</span><b>{report['session_count']}</b></div><div class='metric'><span>Turns</span><b>{totals['turns']}</b></div><div class='metric'><span>Compactions</span><b>{totals['compactions']}</b></div><div class='metric'><span>Tool calls</span><b>{totals['tool_calls']}</b></div><div class='metric'><span>Cache rate</span><b>{analysis['cache_rate']:.1%}</b></div></section>
 <h2>Prioritized optimizations</h2>{finding_html}<h2>Sessions to review</h2><table><thead><tr><th>Session source</th><th>Turns</th><th>Compactions</th><th>Tool calls</th><th>Uncached input</th></tr></thead><tbody>{rows}</tbody></table>
 <h2>Interpretation boundary</h2><p>These thresholds prioritize human review. They do not establish that a compaction, long session, or repeated prompt caused an outcome.</p></body></html>"""

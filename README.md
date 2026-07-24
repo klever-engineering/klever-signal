@@ -1,12 +1,12 @@
-# codex-session-audit
+# Klever Signal
 
-A local, privacy-preserving CLI for finding efficiency and prompt-engineering patterns in Codex JSONL session homes.
+A local, privacy-preserving CLI for finding efficiency and prompt-engineering patterns in coding-agent sessions.
 
-It reads an existing home passed explicitly with `--codex-home`; it does not require a fixed machine path, copy transcripts, upload data, or retain raw prompt text. Reports contain only derived metrics, source-relative paths, and one-way prompt fingerprints.
+The first adapter reads Codex JSONL homes passed explicitly with `--codex-home`. Klever Signal does not require a fixed machine path, copy transcripts, upload data, or retain raw prompt text. Reports contain only derived metrics, source-relative paths, and one-way prompt fingerprints.
 
 ## Why a CLI first?
 
-The durable product is a CLI: it can run on any Codex home, in cron or CI, and produce machine-readable reports. A future agent skill can be a thin interpretation layer that invokes this command and explains the highest-value findings.
+The durable product is a CLI: it can run in cron or CI and produce machine-readable reports. A future agent skill can be a thin interpretation layer that invokes this command and explains the highest-value findings.
 
 ## Install
 
@@ -23,13 +23,13 @@ python -m unittest discover -s tests
 ## Usage
 
 ```bash
-codex-session-audit --codex-home ./my-codex-home  # rich Markdown report (default)
-codex-session-audit --codex-home ./my-codex-home --format markdown
-codex-session-audit --codex-home ./my-codex-home --format html --output report.html
-codex-session-audit --codex-home ./my-codex-home --output report.json
+klever-signal --codex-home ./my-codex-home  # rich Markdown report (default)
+klever-signal --codex-home ./my-codex-home --format markdown
+klever-signal --codex-home ./my-codex-home --format html --output report.html
+klever-signal --codex-home ./my-codex-home --format json --output report.json
 ```
 
-## Current metrics
+## Initial Codex adapter
 
 - sessions, turns, compactions, user messages, and tool calls;
 - final reported token totals and cache ratio inputs;
@@ -38,7 +38,7 @@ codex-session-audit --codex-home ./my-codex-home --output report.json
 
 Markdown and HTML reports add prioritized optimization findings, evidence, recommended actions, and a ranked review queue. They flag patterns such as retry-prone repeated prompts, oversized control sessions, dense compaction, and weak cache reuse. Thresholds are prompts for review, never claims of causality.
 
-The first release deliberately separates deterministic collection from interpretation. It does not claim that a compaction or a long session was harmful without reviewing the relevant evidence.
+The first release deliberately separates deterministic collection from interpretation. It does not claim that a compaction or a long session was harmful without reviewing the relevant evidence. Claude and other coding-agent adapters are future capabilities, not current claims.
 
 ## Privacy model
 

@@ -3,14 +3,14 @@ requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "codex-session-audit"
+name = "klever-signal"
 version = "0.1.0"
-description = "Privacy-preserving analytics for Codex JSONL session homes"
+description = "Privacy-preserving optimization signals for coding-agent sessions"
 readme = "README.md"
 requires-python = ">=3.11"
 license = { text = "MIT" }
 authors = [{ name = "Klever Engineering" }]
-keywords = ["codex", "openai", "prompt-engineering", "session-analytics"]
+keywords = ["coding-agents", "codex", "prompt-engineering", "session-analytics"]
 classifiers = [
   "Development Status :: 3 - Alpha",
   "License :: OSI Approved :: MIT License",
@@ -19,7 +19,7 @@ classifiers = [
 ]
 
 [project.scripts]
-codex-session-audit = "codex_session_audit.cli:main"
+klever-signal = "klever_signal.cli:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]

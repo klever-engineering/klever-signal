@@ -2,8 +2,8 @@ import json
 from pathlib import Path
 import unittest
 
-from codex_session_audit.audit import audit_home
-from codex_session_audit.cli import _html, _markdown
+from klever_signal.audit import audit_home
+from klever_signal.cli import _html, _markdown
 
 
 def write_records(path: Path, records: list[dict]) -> None:
