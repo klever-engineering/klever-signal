@@ -3,6 +3,14 @@
   "version": "0.1.0",
   "description": "Privacy-preserving optimization signals for coding-agent sessions",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/klever-engineering/klever-signal.git"
+  },
+  "bugs": {
+    "url": "https://github.com/klever-engineering/klever-signal/issues"
+  },
+  "homepage": "https://github.com/klever-engineering/klever-signal#readme",
   "type": "module",
   "bin": {
     "klever-signal": "./bin/klever-signal.js"

@@ -40,3 +40,35 @@ test("audits a Codex home without emitting raw prompt text", () => {
   assert.match(resume, /Immediate remediation prompt/);
   assert.equal(resume.includes("Implement a private feature."), false);
 });
+
+test("detects the supported threshold rules from synthetic sessions", () => {
+  const home = mkdtempSync(path.join(os.tmpdir(), "klever-signal-rules-"));
+  const sessions = [
+    { prompt: "Repeat this bounded task.", turns: 15, compactions: 2, toolCalls: 50, cached: 0 },
+    { prompt: "Repeat this bounded task.", turns: 1, compactions: 0, toolCalls: 1, cached: 0 },
+    { prompt: "A separate task.", turns: 1, compactions: 0, toolCalls: 1, cached: 0 },
+    { prompt: "Another separate task.", turns: 1, compactions: 0, toolCalls: 1, cached: 0 },
+    { prompt: "One more separate task.", turns: 1, compactions: 0, toolCalls: 1, cached: 0 },
+  ];
+
+  for (const [index, session] of sessions.entries()) {
+    const file = path.join(home, "sessions/2026/07/24", `rollout-${index}.jsonl`);
+    mkdirSync(path.dirname(file), { recursive: true });
+    const records = [
+      { type: "session_meta", payload: { session_id: `fixture-${index}` } },
+      ...Array.from({ length: session.turns }, () => ({ type: "turn_context", payload: {} })),
+      ...Array.from({ length: session.compactions }, () => ({ type: "compacted", payload: {} })),
+      { type: "response_item", payload: { type: "message", role: "user", content: [{ type: "input_text", text: session.prompt }] } },
+      ...Array.from({ length: session.toolCalls }, () => ({ type: "response_item", payload: { type: "function_call" } })),
+      { type: "event_msg", payload: { type: "token_count", info: { total_token_usage: { input_tokens: 100, cached_input_tokens: session.cached, output_tokens: 10 } } } },
+    ];
+    writeFileSync(file, records.map(JSON.stringify).join("\n"), "utf8");
+  }
+
+  const report = auditCodexHome(home);
+  const rules = new Set(report.analysis.findings.map((finding) => finding.ruleId));
+  assert.deepEqual([...rules].sort(), ["KS001", "KS002", "KS003", "KS004", "KS005"]);
+  assert.equal(report.privacy.rawPromptTextStored, false);
+  assert.equal(report.privacy.rawTranscriptsCopied, false);
+  assert.equal(JSON.stringify(report).includes("Repeat this bounded task."), false);
+});
