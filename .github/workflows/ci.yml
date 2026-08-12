@@ -16,3 +16,31 @@ jobs:
         run: npm test
       - name: Verify CLI
         run: npm run smoke
+      - name: Generate coverage
+        run: npm run test:coverage
+      - name: Convert lcov to Cobertura XML
+        run: pip install lcov-cobertura && lcov_cobertura coverage.lcov -o coverage.xml
+      - name: Upload coverage artifact
+        if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report-javascript
+          path: coverage.xml
+
+  upload-coverage-javascript:
+    needs: test
+    if: ${{ !cancelled() && needs.test.result == 'success' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      code-quality: write
+    steps:
+      - name: Download coverage artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: coverage-report-javascript
+      - uses: actions/upload-code-coverage@v1
+        with:
+          file: coverage.xml
+          language: JavaScript
+          label: code-coverage-agent
