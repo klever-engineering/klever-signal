@@ -28,6 +28,7 @@
   },
   "scripts": {
     "test": "node --test",
+    "test:coverage": "node --test --experimental-test-coverage --test-reporter=lcov --test-reporter-destination=coverage.lcov",
     "smoke": "node ./bin/klever-signal.js --help"
   },
   "keywords": [

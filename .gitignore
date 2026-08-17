@@ -5,3 +5,6 @@ coverage/
 reports/
 __pycache__/
 *.egg-info/
+coverage.lcov
+coverage.xml
+report.html
